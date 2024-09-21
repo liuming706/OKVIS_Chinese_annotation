@@ -4,7 +4,7 @@
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
- * 
+ *
  *   * Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
  *   * Redistributions in binary form must reproduce the above copyright notice,
@@ -44,65 +44,64 @@ namespace okvis {
 namespace cameras {
 
 // Set the mask. It must be the same size as the image and
-bool CameraBase::setMask(const cv::Mat & mask)
+bool CameraBase::setMask(const cv::Mat &mask)
 {
-  // check type
-  if (mask.type() != CV_8UC1) {
-    return false;
-  }
-  // check size
-  if (mask.rows != imageHeight_) {
-    return false;
-  }
-  if (mask.cols != imageWidth_) {
-    return false;
-  }
-  mask_ = mask;
-  return true;
+    // check type
+    if (mask.type() != CV_8UC1) {
+        return false;
+    }
+    // check size
+    if (mask.rows != imageHeight_) {
+        return false;
+    }
+    if (mask.cols != imageWidth_) {
+        return false;
+    }
+    mask_ = mask;
+    return true;
 }
 
 /// Was a nonzero mask set?
 bool CameraBase::removeMask()
 {
-  mask_.resize(0);
-  return true;
+    mask_.resize(0);
+    return true;
 }
 
 // Was a nonzero mask set?
 bool CameraBase::hasMask() const
 {
-  return (mask_.data);
+    return (mask_.data);
 }
 
 // Get the mask.
-const cv::Mat & CameraBase::mask() const
+const cv::Mat &CameraBase::mask() const
 {
-  return mask_;
+    return mask_;
 }
 
-bool CameraBase::isMasked(const Eigen::Vector2d& imagePoint) const
+bool CameraBase::isMasked(const Eigen::Vector2d &imagePoint) const
 {
-  if (!isInImage(imagePoint)) {
-    return true;
-  }
-  if (!hasMask()) {
-    return false;
-  }
-  return mask_.at<uchar>(int(imagePoint[1]), int(imagePoint[0]));
+    if (!isInImage(imagePoint)) {
+        return true;
+    }
+    if (!hasMask()) {
+        return false;
+    }
+    return mask_.at<uchar>(int(imagePoint[1]), int(imagePoint[0]));
 }
 
 // Check if the keypoint is in the image.
-bool CameraBase::isInImage(const Eigen::Vector2d& imagePoint) const
+bool CameraBase::isInImage(const Eigen::Vector2d &imagePoint) const
 {
-  if (imagePoint[0] < 0.0 || imagePoint[1] < 0.0) {
-    return false;
-  }
-  if (imagePoint[0] >= imageWidth_ || imagePoint[1] >= imageHeight_) {
-    return false;
-  }
-  return true;
+    if (imagePoint[0] < 0.0 || imagePoint[1] < 0.0) {
+        return false;
+    }
+    if (imagePoint[0] >= imageWidth_ || imagePoint[1] >= imageHeight_) {
+        return false;
+    }
+    return true;
 }
 
-} // namespace cameras
-} // namespace okvis
-
+}  // namespace cameras
+}  // namespace okvis

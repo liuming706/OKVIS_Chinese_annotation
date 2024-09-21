@@ -4,7 +4,7 @@
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
- * 
+ *
  *   * Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
  *   * Redistributions in binary form must reproduce the above copyright notice,
@@ -44,48 +44,48 @@ namespace okvis {
 namespace ceres {
 
 // Default constructor (assumes not fixed).
-PoseParameterBlock::PoseParameterBlock()
-    : base_t::ParameterBlockSized() {
-  setFixed(false);
+PoseParameterBlock::PoseParameterBlock() : base_t::ParameterBlockSized()
+{
+    setFixed(false);
 }
 
 // Trivial destructor.
-PoseParameterBlock::~PoseParameterBlock() {
-}
+PoseParameterBlock::~PoseParameterBlock() {}
 
 // Constructor with estimate and time.
-PoseParameterBlock::PoseParameterBlock(
-    const okvis::kinematics::Transformation& T_WS, uint64_t id,
-    const okvis::Time& timestamp) {
-  setEstimate(T_WS);
-  setId(id);
-  setTimestamp(timestamp);
-  setFixed(false);
+PoseParameterBlock::PoseParameterBlock(const okvis::kinematics::Transformation &T_WS,
+                                       uint64_t id, const okvis::Time &timestamp)
+{
+    setEstimate(T_WS);
+    setId(id);
+    setTimestamp(timestamp);
+    setFixed(false);
 }
 
 // setters
 // Set estimate of this parameter block.
 //将位姿信息以平移和四元数的形式储存在parameters_
-void PoseParameterBlock::setEstimate(
-    const okvis::kinematics::Transformation& T_WS) {
-  const Eigen::Vector3d r = T_WS.r();
-  const Eigen::Vector4d q = T_WS.q().coeffs();
-  parameters_[0] = r[0];
-  parameters_[1] = r[1];
-  parameters_[2] = r[2];
-  parameters_[3] = q[0];
-  parameters_[4] = q[1];
-  parameters_[5] = q[2];
-  parameters_[6] = q[3];
+void PoseParameterBlock::setEstimate(const okvis::kinematics::Transformation &T_WS)
+{
+    const Eigen::Vector3d r = T_WS.r();
+    const Eigen::Vector4d q = T_WS.q().coeffs();
+    parameters_[0] = r[0];
+    parameters_[1] = r[1];
+    parameters_[2] = r[2];
+    parameters_[3] = q[0];
+    parameters_[4] = q[1];
+    parameters_[5] = q[2];
+    parameters_[6] = q[3];
 }
 
 // getters
 // Get estimate.
-okvis::kinematics::Transformation PoseParameterBlock::estimate() const {
-  return okvis::kinematics::Transformation(
-      Eigen::Vector3d(parameters_[0], parameters_[1], parameters_[2]),
-      Eigen::Quaterniond(parameters_[6], parameters_[3], parameters_[4],
-                         parameters_[5]));
+okvis::kinematics::Transformation PoseParameterBlock::estimate() const
+{
+    return okvis::kinematics::Transformation(
+        Eigen::Vector3d(parameters_[0], parameters_[1], parameters_[2]),
+        Eigen::Quaterniond(parameters_[6], parameters_[3], parameters_[4],
+                           parameters_[5]));
 }
 
 }  // namespace ceres

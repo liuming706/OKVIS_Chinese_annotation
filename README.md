@@ -115,7 +115,7 @@ In order to run a minimal working example, follow the steps below:
 
 2. Run the app as
 
-        ./okvis_app_synchronous path/to/okvis/config/config_fpga_p2_euroc.yaml path/to/MH_01_easy/mav0/
+        build/okvis_app_synchronous config/config_fpga_p2_euroc.yaml datasets/MH_01_easy/mav0/
 
 ### Outputs and frames
 

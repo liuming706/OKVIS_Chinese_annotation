@@ -4,7 +4,7 @@
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
- * 
+ *
  *   * Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
  *   * Redistributions in binary form must reproduce the above copyright notice,
@@ -64,93 +64,93 @@ namespace relative_pose {
  *        be separated by rotation only. Used within a random-sample paradigm for
  *        rejecting outlier correspondences.
  */
-class FrameRotationOnlySacProblem : public RotationOnlySacProblem {
- public:
-  OKVIS_DEFINE_EXCEPTION(Exception,std::runtime_error)
+class FrameRotationOnlySacProblem : public RotationOnlySacProblem
+{
+public:
+    OKVIS_DEFINE_EXCEPTION(Exception, std::runtime_error)
 
-  typedef RotationOnlySacProblem base_t;
+    typedef RotationOnlySacProblem base_t;
 
-  /** The type of adapter that is expected by the methods */
-  using base_t::adapter_t;
-  /** The model we are trying to fit (rotation) */
-  using base_t::model_t;
+    /** The type of adapter that is expected by the methods */
+    using base_t::adapter_t;
+    /** The model we are trying to fit (rotation) */
+    using base_t::model_t;
 
-  /**
-   * \brief Constructor.
-   * \param[in] adapter Visitor holding bearing vector correspondences etc.
-   * @warning Only okvis::relative_pose::FrameRelativeAdapter supported.
-   */
-  FrameRotationOnlySacProblem(adapter_t & adapter)
-      : base_t(adapter),
+    /**
+     * \brief Constructor.
+     * \param[in] adapter Visitor holding bearing vector correspondences etc.
+     * @warning Only okvis::relative_pose::FrameRelativeAdapter supported.
+     */
+    FrameRotationOnlySacProblem(adapter_t &adapter) :
+        base_t(adapter),
         adapterDerived_(
-            *static_cast<opengv::relative_pose::FrameRelativeAdapter*>(&_adapter)) {
-    OKVIS_ASSERT_TRUE(
-        Exception,
-        dynamic_cast<opengv::relative_pose::FrameRelativeAdapter*>(&_adapter),
-        "only opengv::absolute_pose::FrameRelativeAdapter supported");
-  }
-
-  /**
-   * \brief Constructor.
-   * \param[in] adapter Visitor holding bearing vector correspondences etc.
-   * \param[in] indices A vector of indices to be used from all available
-   *                    correspondences.
-   * @warning Only okvis::relative_pose::FrameRelativeAdapter supported.
-   */
-  FrameRotationOnlySacProblem(adapter_t & adapter,
-                              const std::vector<int> & indices)
-      : base_t(adapter, indices),
-        adapterDerived_(
-            *static_cast<opengv::relative_pose::FrameRelativeAdapter*>(&_adapter)) {
-    OKVIS_ASSERT_TRUE(
-        Exception,
-        dynamic_cast<opengv::relative_pose::FrameRelativeAdapter*>(&_adapter),
-        "only opengv::absolute_pose::FrameRelativeAdapter supported");
-  }
-
-  virtual ~FrameRotationOnlySacProblem() {
-  }
-
-  /**
-   * \brief Compute the distances of all samples whith respect to given model
-   *        coefficients.
-   * \param[in] model The coefficients of the model hypothesis.
-   * \param[in] indices The indices of the samples of which we compute distances.
-   * \param[out] scores The resulting distances of the selected samples. Low
-   *                    distances mean a good fit.
-   */
-  virtual void getSelectedDistancesToModel(const model_t & model,
-                                           const std::vector<int> & indices,
-                                           std::vector<double> & scores) const {
-    for (size_t i = 0; i < indices.size(); i++) {
-      bearingVector_t f1 = adapterDerived_.getBearingVector1(indices[i]);
-      bearingVector_t f2 = adapterDerived_.getBearingVector2(indices[i]);
-
-      //unrotate bearing-vector f2
-      bearingVector_t f2_unrotated = model * f2;
-
-      //unrotate bearing-vector f1
-      bearingVector_t f1_unrotated = model.transpose() * f1;
-
-      point_t error1 = (f2_unrotated - f1);
-      point_t error2 = (f1_unrotated - f2);
-      double error_squared1 = error1.transpose() * error1;
-      double error_squared2 = error2.transpose() * error2;
-      scores.push_back(
-          error_squared1 * 0.5 / adapterDerived_.getSigmaAngle1(indices[i])
-              + error_squared2 * 0.5
-                  / adapterDerived_.getSigmaAngle2(indices[i]));
+            *static_cast<opengv::relative_pose::FrameRelativeAdapter *>(&_adapter))
+    {
+        OKVIS_ASSERT_TRUE(
+            Exception,
+            dynamic_cast<opengv::relative_pose::FrameRelativeAdapter *>(&_adapter),
+            "only opengv::absolute_pose::FrameRelativeAdapter supported");
     }
-  }
 
- protected:
-  /// The adapter holding the bearing, correspondences etc.
-  opengv::relative_pose::FrameRelativeAdapter & adapterDerived_;
+    /**
+     * \brief Constructor.
+     * \param[in] adapter Visitor holding bearing vector correspondences etc.
+     * \param[in] indices A vector of indices to be used from all available
+     *                    correspondences.
+     * @warning Only okvis::relative_pose::FrameRelativeAdapter supported.
+     */
+    FrameRotationOnlySacProblem(adapter_t &adapter, const std::vector<int> &indices) :
+        base_t(adapter, indices),
+        adapterDerived_(
+            *static_cast<opengv::relative_pose::FrameRelativeAdapter *>(&_adapter))
+    {
+        OKVIS_ASSERT_TRUE(
+            Exception,
+            dynamic_cast<opengv::relative_pose::FrameRelativeAdapter *>(&_adapter),
+            "only opengv::absolute_pose::FrameRelativeAdapter supported");
+    }
 
+    virtual ~FrameRotationOnlySacProblem() {}
+
+    /**
+     * \brief Compute the distances of all samples whith respect to given model
+     *        coefficients.
+     * \param[in] model The coefficients of the model hypothesis.
+     * \param[in] indices The indices of the samples of which we compute
+     * distances. \param[out] scores The resulting distances of the selected
+     * samples. Low distances mean a good fit.
+     */
+    virtual void getSelectedDistancesToModel(const model_t &model,
+                                             const std::vector<int> &indices,
+                                             std::vector<double> &scores) const
+    {
+        for (size_t i = 0; i < indices.size(); i++) {
+            bearingVector_t f1 = adapterDerived_.getBearingVector1(indices[i]);
+            bearingVector_t f2 = adapterDerived_.getBearingVector2(indices[i]);
+
+            // unrotate bearing-vector f2
+            bearingVector_t f2_unrotated = model * f2;
+
+            // unrotate bearing-vector f1
+            bearingVector_t f1_unrotated = model.transpose() * f1;
+
+            point_t error1 = (f2_unrotated - f1);
+            point_t error2 = (f1_unrotated - f2);
+            double error_squared1 = error1.transpose() * error1;
+            double error_squared2 = error2.transpose() * error2;
+            scores.push_back(
+                error_squared1 * 0.5 / adapterDerived_.getSigmaAngle1(indices[i]) +
+                error_squared2 * 0.5 / adapterDerived_.getSigmaAngle2(indices[i]));
+        }
+    }
+
+protected:
+    /// The adapter holding the bearing, correspondences etc.
+    opengv::relative_pose::FrameRelativeAdapter &adapterDerived_;
 };
 
-}
-}
-}
+}  // namespace relative_pose
+}  // namespace sac_problems
+}  // namespace opengv
 
 #endif /* INCLUDE_OKVIS_OPENGV_FRAMEROTATIONONLYPOSESACPROBLEM_HPP_ */

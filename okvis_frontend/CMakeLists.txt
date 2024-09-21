@@ -1,17 +1,17 @@
 cmake_minimum_required(VERSION 2.8.11)
 project(okvis_frontend)
-
 if(NOT DO_TIMING)
   add_definitions(-DDEACTIVATE_TIMERS)
   message(STATUS "Deactivating timers.")
-endif()    
+endif()
 
 # require Eigen
-find_package( Eigen REQUIRED )
-include_directories(${EIGEN_INCLUDE_DIR}) 
+find_package(Eigen REQUIRED)
+include_directories(${EIGEN_INCLUDE_DIR})
 
 # build the library
-add_library(${PROJECT_NAME} 
+add_library(
+  ${PROJECT_NAME}
   src/Frontend.cpp
   src/VioKeyframeWindowMatchingAlgorithm.cpp
   src/stereo_triangulation.cpp
@@ -28,20 +28,26 @@ add_library(${PROJECT_NAME}
   include/opengv/sac_problems/relative_pose/FrameRelativePoseSacProblem.hpp
   include/opengv/sac_problems/relative_pose/FrameRotationOnlySacProblem.hpp)
 
-# and link it                 
-target_link_libraries(${PROJECT_NAME}
-  PRIVATE ${BRISK_LIBRARIES} 
-  PRIVATE ${OpenGV_LIBRARIES} 
+# and link it
+target_link_libraries(
+  ${PROJECT_NAME}
+  PRIVATE ${BRISK_LIBRARIES}
+  PRIVATE ${OpenGV_LIBRARIES}
   PRIVATE ${CERES_LIBRARIES}
   PUBLIC okvis_util
-  PUBLIC okvis_cv 
-  PUBLIC okvis_ceres 
-  PUBLIC okvis_timing 
+  PUBLIC okvis_cv
+  PUBLIC okvis_ceres
+  PUBLIC okvis_timing
   PUBLIC okvis_matcher)
 
 # installation if required
-install(TARGETS ${PROJECT_NAME}
-  EXPORT okvisTargets 
-  ARCHIVE DESTINATION "${INSTALL_LIB_DIR}" COMPONENT lib
-)
-install(DIRECTORY include/ DESTINATION ${INSTALL_INCLUDE_DIR} COMPONENT dev FILES_MATCHING PATTERN "*.hpp")
+install(
+  TARGETS ${PROJECT_NAME}
+  EXPORT okvisTargets
+  ARCHIVE DESTINATION "${INSTALL_LIB_DIR}" COMPONENT lib)
+install(
+  DIRECTORY include/
+  DESTINATION ${INSTALL_INCLUDE_DIR}
+  COMPONENT dev
+  FILES_MATCHING
+  PATTERN "*.hpp")

@@ -4,7 +4,7 @@
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
- * 
+ *
  *   * Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
  *   * Redistributions in binary form must reproduce the above copyright notice,
@@ -52,149 +52,124 @@ namespace ceres {
 
 /// \brief The 2D keypoint reprojection error.
 /// \tparam GEOMETRY_TYPE The camera gemetry type.
-template<class GEOMETRY_TYPE>
+template <class GEOMETRY_TYPE>
 class ReprojectionError : public ReprojectionError2dBase
 {
- public:
+public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    OKVIS_DEFINE_EXCEPTION(Exception, std::runtime_error)
 
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  OKVIS_DEFINE_EXCEPTION(Exception,std::runtime_error)
+    /// \brief Make the camera geometry type accessible.
+    typedef GEOMETRY_TYPE camera_geometry_t;
 
-  /// \brief Make the camera geometry type accessible.
-  typedef GEOMETRY_TYPE camera_geometry_t;
+    /// \brief The base class type.
+    typedef ::ceres::SizedCostFunction<2, 7, 4, 7> base_t;
 
-  /// \brief The base class type.
-  typedef ::ceres::SizedCostFunction<2, 7, 4, 7> base_t;
+    /// \brief Number of residuals (2)
+    static const int kNumResiduals = 2;
 
-  /// \brief Number of residuals (2)
-  static const int kNumResiduals = 2;
+    /// \brief The keypoint type (measurement type).
+    typedef Eigen::Vector2d keypoint_t;
 
-  /// \brief The keypoint type (measurement type).
-  typedef Eigen::Vector2d keypoint_t;
+    /// \brief Default constructor.
+    ReprojectionError();
 
-  /// \brief Default constructor.
-  ReprojectionError();
+    /// \brief Construct with measurement and information matrix
+    /// @param[in] cameraGeometry The underlying camera geometry.
+    /// @param[in] cameraId The id of the camera in the okvis::cameras::NCameraSystem.
+    /// @param[in] measurement The measurement.
+    /// @param[in] information The information (weight) matrix.
+    ReprojectionError(std::shared_ptr<const camera_geometry_t> cameraGeometry,
+                      uint64_t cameraId, const measurement_t &measurement,
+                      const covariance_t &information);
 
-  /// \brief Construct with measurement and information matrix
-  /// @param[in] cameraGeometry The underlying camera geometry.
-  /// @param[in] cameraId The id of the camera in the okvis::cameras::NCameraSystem.
-  /// @param[in] measurement The measurement.
-  /// @param[in] information The information (weight) matrix.
-  ReprojectionError(std::shared_ptr<const camera_geometry_t> cameraGeometry,
-                    uint64_t cameraId, const measurement_t & measurement,
-                    const covariance_t & information);
+    /// \brief Trivial destructor.
+    virtual ~ReprojectionError() {}
 
-  /// \brief Trivial destructor.
-  virtual ~ReprojectionError()
-  {
-  }
+    // setters
+    /// \brief Set the measurement.
+    /// @param[in] measurement The measurement.
+    virtual void setMeasurement(const measurement_t &measurement)
+    {
+        measurement_ = measurement;
+    }
 
-  // setters
-  /// \brief Set the measurement.
-  /// @param[in] measurement The measurement.
-  virtual void setMeasurement(const measurement_t& measurement)
-  {
-    measurement_ = measurement;
-  }
+    /// \brief Set the underlying camera model.
+    /// @param[in] cameraGeometry The camera geometry.
+    void setCameraGeometry(std::shared_ptr<const camera_geometry_t> cameraGeometry)
+    {
+        cameraGeometry_ = cameraGeometry;
+    }
 
-  /// \brief Set the underlying camera model.
-  /// @param[in] cameraGeometry The camera geometry.
-  void setCameraGeometry(
-      std::shared_ptr<const camera_geometry_t> cameraGeometry)
-  {
-    cameraGeometry_ = cameraGeometry;
-  }
+    /// \brief Set the information.
+    /// @param[in] information The information (weight) matrix.
+    virtual void setInformation(const covariance_t &information);
 
-  /// \brief Set the information.
-  /// @param[in] information The information (weight) matrix.
-  virtual void setInformation(const covariance_t& information);
+    // getters
+    /// \brief Get the measurement.
+    /// \return The measurement vector.
+    virtual const measurement_t &measurement() const { return measurement_; }
 
-  // getters
-  /// \brief Get the measurement.
-  /// \return The measurement vector.
-  virtual const measurement_t& measurement() const
-  {
-    return measurement_;
-  }
+    /// \brief Get the information matrix.
+    /// \return The information (weight) matrix.
+    virtual const covariance_t &information() const { return information_; }
 
-  /// \brief Get the information matrix.
-  /// \return The information (weight) matrix.
-  virtual const covariance_t& information() const
-  {
-    return information_;
-  }
+    /// \brief Get the covariance matrix.
+    /// \return The inverse information (covariance) matrix.
+    virtual const covariance_t &covariance() const { return covariance_; }
 
-  /// \brief Get the covariance matrix.
-  /// \return The inverse information (covariance) matrix.
-  virtual const covariance_t& covariance() const
-  {
-    return covariance_;
-  }
+    // error term and Jacobian implementation
+    /**
+     * @brief This evaluates the error term and additionally computes the Jacobians.
+     * @param parameters Pointer to the parameters (see ceres)
+     * @param residuals Pointer to the residual vector (see ceres)
+     * @param jacobians Pointer to the Jacobians (see ceres)
+     * @return success of th evaluation.
+     */
+    virtual bool Evaluate(double const *const *parameters, double *residuals,
+                          double **jacobians) const;
 
-  // error term and Jacobian implementation
-  /**
-   * @brief This evaluates the error term and additionally computes the Jacobians.
-   * @param parameters Pointer to the parameters (see ceres)
-   * @param residuals Pointer to the residual vector (see ceres)
-   * @param jacobians Pointer to the Jacobians (see ceres)
-   * @return success of th evaluation.
-   */
-  virtual bool Evaluate(double const* const * parameters, double* residuals,
-                        double** jacobians) const;
+    /**
+     * @brief This evaluates the error term and additionally computes
+     *        the Jacobians in the minimal internal representation.
+     * @param parameters Pointer to the parameters (see ceres)
+     * @param residuals Pointer to the residual vector (see ceres)
+     * @param jacobians Pointer to the Jacobians (see ceres)
+     * @param jacobiansMinimal Pointer to the minimal Jacobians (equivalent to jacobians).
+     * @return Success of the evaluation.
+     */
+    virtual bool EvaluateWithMinimalJacobians(double const *const *parameters,
+                                              double *residuals, double **jacobians,
+                                              double **jacobiansMinimal) const;
+    // sizes
+    /// \brief Residual dimension.
+    size_t residualDim() const { return kNumResiduals; }
 
-  /**
-   * @brief This evaluates the error term and additionally computes
-   *        the Jacobians in the minimal internal representation.
-   * @param parameters Pointer to the parameters (see ceres)
-   * @param residuals Pointer to the residual vector (see ceres)
-   * @param jacobians Pointer to the Jacobians (see ceres)
-   * @param jacobiansMinimal Pointer to the minimal Jacobians (equivalent to jacobians).
-   * @return Success of the evaluation.
-   */
-  virtual bool EvaluateWithMinimalJacobians(double const* const * parameters,
-                                            double* residuals,
-                                            double** jacobians,
-                                            double** jacobiansMinimal) const;
-  // sizes
-  /// \brief Residual dimension.
-  size_t residualDim() const
-  {
-    return kNumResiduals;
-  }
+    /// \brief Number of parameter blocks.
+    size_t parameterBlocks() const { return parameter_block_sizes().size(); }
 
-  /// \brief Number of parameter blocks.
-  size_t parameterBlocks() const
-  {
-    return parameter_block_sizes().size();
-  }
+    /// \brief Dimension of an individual parameter block.
+    /// @param[in] parameterBlockId ID of the parameter block of interest.
+    /// \return The dimension.
+    size_t parameterBlockDim(size_t parameterBlockId) const
+    {
+        return base_t::parameter_block_sizes().at(parameterBlockId);
+    }
 
-  /// \brief Dimension of an individual parameter block.
-  /// @param[in] parameterBlockId ID of the parameter block of interest.
-  /// \return The dimension.
-  size_t parameterBlockDim(size_t parameterBlockId) const
-  {
-    return base_t::parameter_block_sizes().at(parameterBlockId);
-  }
+    /// @brief Residual block type as string
+    virtual std::string typeInfo() const { return "ReprojectionError"; }
 
-  /// @brief Residual block type as string
-  virtual std::string typeInfo() const
-  {
-    return "ReprojectionError";
-  }
+protected:
+    // the measurement
+    measurement_t measurement_;  ///< The (2D) measurement.
 
- protected:
+    /// \brief The camera model:
+    std::shared_ptr<const camera_geometry_t> cameraGeometry_;
 
-  // the measurement
-  measurement_t measurement_; ///< The (2D) measurement.
-
-  /// \brief The camera model:
-  std::shared_ptr<const camera_geometry_t> cameraGeometry_;
-
-  // weighting related
-  covariance_t information_; ///< The 2x2 information matrix.
-  covariance_t squareRootInformation_; ///< The 2x2 square root information matrix.
-  covariance_t covariance_; ///< The 2x2 covariance matrix.
-
+    // weighting related
+    covariance_t information_;            ///< The 2x2 information matrix.
+    covariance_t squareRootInformation_;  ///< The 2x2 square root information matrix.
+    covariance_t covariance_;             ///< The 2x2 covariance matrix.
 };
 
 }  // namespace ceres

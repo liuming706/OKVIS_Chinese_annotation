@@ -3,7 +3,7 @@
 *.lo
 *.o
 *.obj
-
+CMakeLists.txt.user
 # Precompiled Headers
 *.gch
 *.pch
@@ -26,6 +26,7 @@
 *.exe
 *.out
 *.app
-
+build/**
+datasets/**
 # Docu
 documentation/html/

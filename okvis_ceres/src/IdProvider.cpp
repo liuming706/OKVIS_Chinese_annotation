@@ -4,7 +4,7 @@
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
- * 
+ *
  *   * Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
  *   * Redistributions in binary form must reproduce the above copyright notice,
@@ -46,14 +46,16 @@ namespace IdProvider {
 std::atomic<uint64_t> _id(0);
 
 // get a unique new ID.
-uint64_t instance::newId() {
-  const uint64_t retVal = ++_id;
-  return retVal;
+uint64_t instance::newId()
+{
+    const uint64_t retVal = ++_id;
+    return retVal;
 }
 
 // Get the last generated ID.
-uint64_t instance::currentId() {
-  return _id;
+uint64_t instance::currentId()
+{
+    return _id;
 }
-}
-}
+}  // namespace IdProvider
+}  // namespace okvis

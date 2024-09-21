@@ -4,7 +4,7 @@
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
- * 
+ *
  *   * Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
  *   * Redistributions in binary form must reproduce the above copyright notice,
@@ -32,8 +32,8 @@
 
 /**
  * @file ErrorInterface.hpp
- * @brief Header file for the ErrorInterface class. A simple interface class that
-          other error classes should inherit from.
+ * @brief Header file for the ErrorInterface class. A simple interface class
+ that other error classes should inherit from.
  * @author Stefan Leutenegger
  */
 
@@ -50,53 +50,52 @@ namespace okvis {
 namespace ceres {
 
 /// @brief Simple interface class the errors implemented here should inherit from.
-class ErrorInterface {
- public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW
-  OKVIS_DEFINE_EXCEPTION(Exception, std::runtime_error)
+class ErrorInterface
+{
+public:
+    EIGEN_MAKE_ALIGNED_OPERATOR_NEW
+    OKVIS_DEFINE_EXCEPTION(Exception, std::runtime_error)
 
-  /// @brief Constructor
-  ErrorInterface() {
-  }
-  /// @brief Destructor (does nothing).
-  virtual ~ErrorInterface() {
-  }
+    /// @brief Constructor
+    ErrorInterface() {}
+    /// @brief Destructor (does nothing).
+    virtual ~ErrorInterface() {}
 
-  /// @name Sizes
-  /// @{
+    /// @name Sizes
+    /// @{
 
-  /// @brief Get dimension of residuals.
-  /// @return The residual dimension.
-  virtual size_t residualDim() const = 0;
+    /// @brief Get dimension of residuals.
+    /// @return The residual dimension.
+    virtual size_t residualDim() const = 0;
 
-  /// @brief Get the number of parameter blocks this is connected to.
-  /// @return The number of parameter blocks.
-  virtual size_t parameterBlocks() const = 0;
+    /// @brief Get the number of parameter blocks this is connected to.
+    /// @return The number of parameter blocks.
+    virtual size_t parameterBlocks() const = 0;
 
-  /**
-   * @brief get the dimension of a parameter block this is connected to.
-   * @param parameterBlockId The ID of the parameter block of interest.
-   * @return Its dimension.
-   */
-  virtual size_t parameterBlockDim(size_t parameterBlockId) const = 0;
+    /**
+     * @brief get the dimension of a parameter block this is connected to.
+     * @param parameterBlockId The ID of the parameter block of interest.
+     * @return Its dimension.
+     */
+    virtual size_t parameterBlockDim(size_t parameterBlockId) const = 0;
 
-  /// @}
-  // Error and Jacobian computation
-  /**
-   * @brief This evaluates the error term and additionally computes
-   *        the Jacobians in the minimal internal representation.
-   * @param parameters Pointer to the parameters (see ceres)
-   * @param residuals Pointer to the residual vector (see ceres)
-   * @param jacobians Pointer to the Jacobians (see ceres)
-   * @param jacobiansMinimal Pointer to the minimal Jacobians (equivalent to jacobians).
-   * @return Success of the evaluation.
-   */
-  virtual bool EvaluateWithMinimalJacobians(
-      double const* const * parameters, double* residuals, double** jacobians,
-      double** jacobiansMinimal) const = 0;
+    /// @}
+    // Error and Jacobian computation
+    /**
+     * @brief This evaluates the error term and additionally computes
+     *        the Jacobians in the minimal internal representation.
+     * @param parameters Pointer to the parameters (see ceres)
+     * @param residuals Pointer to the residual vector (see ceres)
+     * @param jacobians Pointer to the Jacobians (see ceres)
+     * @param jacobiansMinimal Pointer to the minimal Jacobians (equivalent to jacobians).
+     * @return Success of the evaluation.
+     */
+    virtual bool EvaluateWithMinimalJacobians(double const *const *parameters,
+                                              double *residuals, double **jacobians,
+                                              double **jacobiansMinimal) const = 0;
 
-  /// @brief Residual block type as string
-  virtual std::string typeInfo() const = 0;
+    /// @brief Residual block type as string
+    virtual std::string typeInfo() const = 0;
 };
 
 }  // namespace ceres

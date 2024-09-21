@@ -4,7 +4,7 @@
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
- * 
+ *
  *   * Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
  *   * Redistributions in binary form must reproduce the above copyright notice,
@@ -46,67 +46,64 @@
 
 TEST(MulitFrame, functions)
 {
+    // instantiate all possible versions of test cameras
+    std::vector<std::shared_ptr<const okvis::cameras::CameraBase>> cameras;
+    std::vector<okvis::cameras::NCameraSystem::DistortionType> distortions;
+    cameras.push_back(
+        okvis::cameras::PinholeCamera<okvis::cameras::NoDistortion>::createTestObject());
+    distortions.push_back(okvis::cameras::NCameraSystem::NoDistortion);
+    cameras.push_back(
+        okvis::cameras::PinholeCamera<
+            okvis::cameras::RadialTangentialDistortion>::createTestObject());
+    distortions.push_back(okvis::cameras::NCameraSystem::RadialTangential);
+    cameras.push_back(
+        okvis::cameras::PinholeCamera<okvis::cameras::EquidistantDistortion>::createTestObject());
+    distortions.push_back(okvis::cameras::NCameraSystem::Equidistant);
 
-  // instantiate all possible versions of test cameras
-  std::vector<std::shared_ptr<const okvis::cameras::CameraBase> > cameras;
-  std::vector<okvis::cameras::NCameraSystem::DistortionType> distortions;
-  cameras.push_back(
-      okvis::cameras::PinholeCamera<okvis::cameras::NoDistortion>::createTestObject());
-  distortions.push_back(okvis::cameras::NCameraSystem::NoDistortion);
-  cameras.push_back(
-      okvis::cameras::PinholeCamera<okvis::cameras::RadialTangentialDistortion>::createTestObject());
-  distortions.push_back(okvis::cameras::NCameraSystem::RadialTangential);
-  cameras.push_back(
-      okvis::cameras::PinholeCamera<okvis::cameras::EquidistantDistortion>::createTestObject());
-  distortions.push_back(okvis::cameras::NCameraSystem::Equidistant);
+    // the mounting transformations. The third one is opposite direction
+    std::vector<std::shared_ptr<const okvis::kinematics::Transformation>> T_SC;
+    T_SC.push_back(std::shared_ptr<okvis::kinematics::Transformation>(
+        new okvis::kinematics::Transformation(Eigen::Vector3d(0.1, 0.1, 0.1),
+                                              Eigen::Quaterniond(1, 0, 0, 0))));
+    T_SC.push_back(std::shared_ptr<okvis::kinematics::Transformation>(
+        new okvis::kinematics::Transformation(Eigen::Vector3d(0.1, -0.1, -0.1),
+                                              Eigen::Quaterniond(1, 0, 0, 0))));
+    T_SC.push_back(std::shared_ptr<okvis::kinematics::Transformation>(
+        new okvis::kinematics::Transformation(Eigen::Vector3d(0.1, -0.1, -0.1),
+                                              Eigen::Quaterniond(0, 0, 1, 0))));
 
-  // the mounting transformations. The third one is opposite direction
-  std::vector<std::shared_ptr<const okvis::kinematics::Transformation>> T_SC;
-  T_SC.push_back(
-      std::shared_ptr<okvis::kinematics::Transformation>(
-          new okvis::kinematics::Transformation(Eigen::Vector3d(0.1, 0.1, 0.1),
-                                                Eigen::Quaterniond(1, 0, 0, 0))));
-  T_SC.push_back(
-      std::shared_ptr<okvis::kinematics::Transformation>(
-          new okvis::kinematics::Transformation(
-              Eigen::Vector3d(0.1, -0.1, -0.1), Eigen::Quaterniond(1, 0, 0, 0))));
-  T_SC.push_back(
-      std::shared_ptr<okvis::kinematics::Transformation>(
-          new okvis::kinematics::Transformation(
-              Eigen::Vector3d(0.1, -0.1, -0.1), Eigen::Quaterniond(0, 0, 1, 0))));
+    okvis::cameras::NCameraSystem nCameraSystem(T_SC, cameras, distortions,
+                                                true);  // computes overlaps
+    okvis::MultiFrame multiFrame(nCameraSystem, okvis::Time::now(), 1);
 
-  okvis::cameras::NCameraSystem nCameraSystem(T_SC, cameras, distortions, true);  // computes overlaps
-  okvis::MultiFrame multiFrame(nCameraSystem, okvis::Time::now(), 1);
-
-  for (size_t c = 0; c < cameras.size(); ++c) {
-    //std::cout << "Testing MultiFrame with " << cameras.at(c)->type() << std::endl;
+    for (size_t c = 0; c < cameras.size(); ++c) {
+        // std::cout << "Testing MultiFrame with " << cameras.at(c)->type() << std::endl;
 
 #ifdef __ARM_NEON__
-   std::shared_ptr<cv::FeatureDetector> detector(
-        new brisk::BriskFeatureDetector(34, 2));
+        std::shared_ptr<cv::FeatureDetector> detector(
+            new brisk::BriskFeatureDetector(34, 2));
 #else
-   std::shared_ptr<cv::FeatureDetector> detector(
-        new brisk::ScaleSpaceFeatureDetector<brisk::HarrisScoreCalculator>(
-            34, 2, 800, 450));
+        std::shared_ptr<cv::FeatureDetector> detector(
+            new brisk::ScaleSpaceFeatureDetector<brisk::HarrisScoreCalculator>(
+                34, 2, 800, 450));
 #endif
 
-    std::shared_ptr<cv::DescriptorExtractor> extractor(
-        new cv::BriskDescriptorExtractor(true, false));
+        std::shared_ptr<cv::DescriptorExtractor> extractor(
+            new cv::BriskDescriptorExtractor(true, false));
 
-    // create a stupid random image
-    Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> eigenImage(
-        752, 480);
-    eigenImage.setRandom();
-    cv::Mat image(480, 752, CV_8UC1, eigenImage.data());
+        // create a stupid random image
+        Eigen::Matrix<unsigned char, Eigen::Dynamic, Eigen::Dynamic> eigenImage(
+            752, 480);
+        eigenImage.setRandom();
+        cv::Mat image(480, 752, CV_8UC1, eigenImage.data());
 
-    // setup multifrmae
-    multiFrame.setDetector(c,detector);
-    multiFrame.setExtractor(c,extractor);
-    multiFrame.setImage(c,image);
+        // setup multifrmae
+        multiFrame.setDetector(c, detector);
+        multiFrame.setExtractor(c, extractor);
+        multiFrame.setImage(c, image);
 
-    // run
-    multiFrame.detect(c);
-    multiFrame.describe(c);
-  }
+        // run
+        multiFrame.detect(c);
+        multiFrame.describe(c);
+    }
 }
-

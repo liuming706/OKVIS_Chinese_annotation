@@ -4,7 +4,7 @@
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
- * 
+ *
  *   * Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
  *   * Redistributions in binary form must reproduce the above copyright notice,
@@ -46,92 +46,100 @@
 #include <okvis/Time.hpp>
 
 namespace okvis {
-namespace ceres{
+namespace ceres {
 
 /// \brief Wraps the parameter block for a pose estimate
-class PoseParameterBlock : public ParameterBlockSized<7,6,okvis::kinematics::Transformation>{
+class PoseParameterBlock
+    : public ParameterBlockSized<7, 6, okvis::kinematics::Transformation>
+{
 public:
+    /// \brief The estimate type (okvis::kinematics::Transformation ).
+    typedef okvis::kinematics::Transformation estimate_t;
 
-  /// \brief The estimate type (okvis::kinematics::Transformation ).
-  typedef okvis::kinematics::Transformation estimate_t;
+    /// \brief The base class type.
+    typedef ParameterBlockSized<7, 6, estimate_t> base_t;
 
-  /// \brief The base class type.
-  typedef ParameterBlockSized<7,6,estimate_t> base_t;
+    /// \brief Default constructor (assumes not fixed).
+    PoseParameterBlock();
 
-  /// \brief Default constructor (assumes not fixed).
-  PoseParameterBlock();
+    /// \brief Constructor with estimate and time.
+    /// @param[in] T_WS The pose estimate as T_WS.
+    /// @param[in] id The (unique) ID of this block.
+    /// @param[in] timestamp The timestamp of this state.
+    PoseParameterBlock(const okvis::kinematics::Transformation &T_WS,
+                       uint64_t id, const okvis::Time &timestamp);
 
-  /// \brief Constructor with estimate and time.
-  /// @param[in] T_WS The pose estimate as T_WS.
-  /// @param[in] id The (unique) ID of this block.
-  /// @param[in] timestamp The timestamp of this state.
-  PoseParameterBlock(const okvis::kinematics::Transformation& T_WS, uint64_t id, const okvis::Time& timestamp);
+    /// \brief Trivial destructor.
+    virtual ~PoseParameterBlock();
 
-  /// \brief Trivial destructor.
-  virtual ~PoseParameterBlock();
+    // setters
+    /// @brief Set estimate of this parameter block.
+    /// @param[in] T_WS The estimate to set this to.
+    virtual void setEstimate(const okvis::kinematics::Transformation &T_WS);
 
-  // setters
-  /// @brief Set estimate of this parameter block.
-  /// @param[in] T_WS The estimate to set this to.
-  virtual void setEstimate(const okvis::kinematics::Transformation& T_WS);
+    /// @param[in] timestamp The timestamp of this state.
+    void setTimestamp(const okvis::Time &timestamp) { timestamp_ = timestamp; }
 
-  /// @param[in] timestamp The timestamp of this state.
-  void setTimestamp(const okvis::Time& timestamp){timestamp_=timestamp;}
+    // getters
+    /// @brief Get estimate.
+    /// \return The estimate.
+    virtual okvis::kinematics::Transformation estimate() const;
 
-  // getters
-  /// @brief Get estimate.
-  /// \return The estimate.
-  virtual okvis::kinematics::Transformation estimate() const;
+    /// \brief Get the time.
+    /// \return The timestamp of this state.
+    okvis::Time timestamp() const { return timestamp_; }
 
-  /// \brief Get the time.
-  /// \return The timestamp of this state.
-  okvis::Time timestamp() const {return timestamp_;}
+    // minimal internal parameterization
+    // x0_plus_Delta=Delta_Chi[+]x0
+    /// \brief Generalization of the addition operation,
+    ///        x_plus_delta = Plus(x, delta)
+    ///        with the condition that Plus(x, 0) = x.
+    /// @param[in] x0 Variable.
+    /// @param[in] Delta_Chi Perturbation.
+    /// @param[out] x0_plus_Delta Perturbed x.
+    virtual void plus(const double *x0, const double *Delta_Chi,
+                      double *x0_plus_Delta) const
+    {
+        PoseLocalParameterization::plus(x0, Delta_Chi, x0_plus_Delta);
+    }
 
-  // minimal internal parameterization
-  // x0_plus_Delta=Delta_Chi[+]x0
-  /// \brief Generalization of the addition operation,
-  ///        x_plus_delta = Plus(x, delta)
-  ///        with the condition that Plus(x, 0) = x.
-  /// @param[in] x0 Variable.
-  /// @param[in] Delta_Chi Perturbation.
-  /// @param[out] x0_plus_Delta Perturbed x.
-  virtual void plus(const double* x0, const double* Delta_Chi, double* x0_plus_Delta) const {
-    PoseLocalParameterization::plus(x0,Delta_Chi,x0_plus_Delta);
-  }
+    /// \brief The jacobian of Plus(x, delta) w.r.t delta at delta = 0.
+    /// @param[in] x0 Variable.
+    /// @param[out] jacobian The Jacobian.
+    virtual void plusJacobian(const double *x0, double *jacobian) const
+    {
+        PoseLocalParameterization::plusJacobian(x0, jacobian);
+    }
 
-  /// \brief The jacobian of Plus(x, delta) w.r.t delta at delta = 0.
-  /// @param[in] x0 Variable.
-  /// @param[out] jacobian The Jacobian.
-  virtual void plusJacobian(const double* x0, double* jacobian) const {
-    PoseLocalParameterization::plusJacobian(x0,jacobian);
-  }
+    // Delta_Chi=x0_plus_Delta[-]x0
+    /// \brief Computes the minimal difference between a variable x and a perturbed variable x_plus_delta
+    /// @param[in] x0 Variable.
+    /// @param[in] x0_plus_Delta Perturbed variable.
+    /// @param[out] Delta_Chi Minimal difference.
+    /// \return True on success.
+    virtual void minus(const double *x0, const double *x0_plus_Delta,
+                       double *Delta_Chi) const
+    {
+        PoseLocalParameterization::minus(x0, x0_plus_Delta, Delta_Chi);
+    }
 
-  // Delta_Chi=x0_plus_Delta[-]x0
-  /// \brief Computes the minimal difference between a variable x and a perturbed variable x_plus_delta
-  /// @param[in] x0 Variable.
-  /// @param[in] x0_plus_Delta Perturbed variable.
-  /// @param[out] Delta_Chi Minimal difference.
-  /// \return True on success.
-  virtual void minus(const double* x0, const double* x0_plus_Delta, double* Delta_Chi) const {
-    PoseLocalParameterization::minus(x0, x0_plus_Delta, Delta_Chi);
-  }
+    /// \brief Computes the Jacobian from minimal space to naively overparameterised space as used by ceres.
+    /// @param[in] x0 Variable.
+    /// @param[out] jacobian the Jacobian (dimension minDim x dim).
+    /// \return True on success.
+    virtual void liftJacobian(const double *x0, double *jacobian) const
+    {
+        PoseLocalParameterization::liftJacobian(x0, jacobian);
+    }
 
-  /// \brief Computes the Jacobian from minimal space to naively overparameterised space as used by ceres.
-  /// @param[in] x0 Variable.
-  /// @param[out] jacobian the Jacobian (dimension minDim x dim).
-  /// \return True on success.
-  virtual void liftJacobian(const double* x0, double* jacobian) const {
-    PoseLocalParameterization::liftJacobian(x0,jacobian);
-  }
-
-  /// @brief Return parameter block type as string
-  virtual std::string typeInfo() const {return "PoseParameterBlock";}
+    /// @brief Return parameter block type as string
+    virtual std::string typeInfo() const { return "PoseParameterBlock"; }
 
 private:
-  okvis::Time timestamp_; ///< Time of this state.
+    okvis::Time timestamp_;  ///< Time of this state.
 };
 
-} // namespace ceres
-} // namespace okvis
+}  // namespace ceres
+}  // namespace okvis
 
 #endif /* INCLUDE_OKVIS_CERES_POSEPARAMETERBLOCK_HPP_ */

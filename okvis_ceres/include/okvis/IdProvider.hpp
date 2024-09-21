@@ -4,7 +4,7 @@
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
- * 
+ *
  *   * Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
  *   * Redistributions in binary form must reproduce the above copyright notice,
@@ -32,8 +32,8 @@
 
 /**
  * @file IdProvider.hpp
- * @brief Header file for the IdProvider struct emulating a singleton. This provides
-          Unique IDs.
+ * @brief Header file for the IdProvider struct emulating a singleton. This
+ provides Unique IDs.
  * @author Stefan Leutenegger
  */
 
@@ -50,19 +50,18 @@ namespace okvis {
 /// \brief Provides IDs.
 namespace IdProvider {
 // emulating singleton syntax
-struct instance
-{
-  /// \brief get a unique new ID.
-  static uint64_t newId();
+struct instance {
+    /// \brief get a unique new ID.
+    static uint64_t newId();
 
-  /**
-   * \brief Get the last generated ID.
-   * \warning Use with caution. This ID is almost surely in use.
-   */
-  static uint64_t currentId();
+    /**
+     * \brief Get the last generated ID.
+     * \warning Use with caution. This ID is almost surely in use.
+     */
+    static uint64_t currentId();
 };
 
-} // namespace IdProvider
-} // namespace okvis
+}  // namespace IdProvider
+}  // namespace okvis
 
 #endif /* INCLUDE_OKVIS_IDPROVIDER_HPP_ */

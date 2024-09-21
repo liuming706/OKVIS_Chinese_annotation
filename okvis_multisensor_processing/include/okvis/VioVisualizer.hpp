@@ -4,7 +4,7 @@
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
- * 
+ *
  *   * Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
  *   * Redistributions in binary form must reproduce the above copyright notice,
@@ -42,13 +42,15 @@
 
 #ifndef INCLUDE_OKVIS_VIOVISUALIZER_HPP_
 #define INCLUDE_OKVIS_VIOVISUALIZER_HPP_
-
-#include <opencv/highgui.h>
+#include <opencv2/highgui.hpp>
+#include <opencv2/imgproc/imgproc_c.h>
+#include <opencv2/imgproc/types_c.h>
+// #include <opencv/highgui.h>
 #include <okvis/assert_macros.hpp>
 
-#include <okvis/Parameters.hpp>
-#include <okvis/MultiFrame.hpp>
 #include <okvis/FrameTypedefs.hpp>
+#include <okvis/MultiFrame.hpp>
+#include <okvis/Parameters.hpp>
 
 /// \brief okvis Main namespace of this package.
 namespace okvis {
@@ -56,58 +58,59 @@ namespace okvis {
 /**
  * @brief This class is responsible to visualize the matching results
  */
-class VioVisualizer {
- public:
+class VioVisualizer
+{
+public:
+    /// @brief This struct contains the relevant data for visualizing
+    struct VisualizationData {
+        typedef std::shared_ptr<VisualizationData> Ptr;
+        okvis::ObservationVector observations;  ///< Vector containing all the keypoint observations.
+        std::shared_ptr<okvis::MultiFrame> currentFrames;  ///< Current multiframe.
+        std::shared_ptr<okvis::MultiFrame> keyFrames;  ///< Current keyframe.
+        okvis::kinematics::Transformation T_WS_keyFrame;  ///< Pose of the current keyframe
+    };
 
-  /// @brief This struct contains the relevant data for visualizing
-  struct VisualizationData {
-    typedef std::shared_ptr<VisualizationData> Ptr;
-    okvis::ObservationVector observations;    ///< Vector containing all the keypoint observations.
-    std::shared_ptr<okvis::MultiFrame> currentFrames; ///< Current multiframe.
-    std::shared_ptr<okvis::MultiFrame> keyFrames;     ///< Current keyframe.
-    okvis::kinematics::Transformation T_WS_keyFrame;  ///< Pose of the current keyframe
-  };
+    OKVIS_DEFINE_EXCEPTION(Exception, std::runtime_error)
 
-  OKVIS_DEFINE_EXCEPTION(Exception, std::runtime_error)
+    /**
+     * @brief Constructor.
+     * @param parameters Parameters and settings.
+     */
+    VioVisualizer(okvis::VioParameters &parameters);
+    virtual ~VioVisualizer();
 
-  /**
-   * @brief Constructor.
-   * @param parameters Parameters and settings.
-   */
-  VioVisualizer(okvis::VioParameters& parameters);
-  virtual ~VioVisualizer();
+    /**
+     * @brief Initialise parameters. Called in constructor.
+     * @param parameters Parameters and settings.
+     */
+    void init(okvis::VioParameters &parameters);
+    /**
+     * @brief Show the current frames with the current keyframe and all its
+     * matches.
+     * @param data Visualization data containing all the info.
+     */
+    void showDebugImages(VisualizationData::Ptr &data);
 
-  /**
-   * @brief Initialise parameters. Called in constructor.
-   * @param parameters Parameters and settings.
-   */
-  void init(okvis::VioParameters& parameters);
-  /**
-   * @brief Show the current frames with the current keyframe and all its matches.
-   * @param data Visualization data containing all the info.
-   */
-  void showDebugImages(VisualizationData::Ptr& data);
+    /**
+     * @brief Circles all keypoints in the current frame, links the matching
+     * ones to the current keyframe and returns the result.
+     * @param data Visualization data.
+     * @param image_number Index of the frame to display.
+     * @return OpenCV matrix with the resulting image.
+     */
+    cv::Mat drawMatches(VisualizationData::Ptr &data, size_t image_number);
 
-  /**
-   * @brief Circles all keypoints in the current frame, links the matching ones to
-   *        the current keyframe and returns the result.
-   * @param data Visualization data.
-   * @param image_number Index of the frame to display.
-   * @return OpenCV matrix with the resulting image.
-   */
-  cv::Mat drawMatches(VisualizationData::Ptr& data, size_t image_number);
-  
- private:
-  /**
-   * @brief Circles all keypoints in the current frame and returns the result.
-   * @param data Visualization data.
-   * @param cameraIndex Index of the frame to display.
-   * @return OpenCV matrix with the resulting image.
-   */
-  cv::Mat drawKeypoints(VisualizationData::Ptr& data, size_t cameraIndex);
+private:
+    /**
+     * @brief Circles all keypoints in the current frame and returns the result.
+     * @param data Visualization data.
+     * @param cameraIndex Index of the frame to display.
+     * @return OpenCV matrix with the resulting image.
+     */
+    cv::Mat drawKeypoints(VisualizationData::Ptr &data, size_t cameraIndex);
 
-  /// Parameters and settings.
-  okvis::VioParameters parameters_;
+    /// Parameters and settings.
+    okvis::VioParameters parameters_;
 };
 
 } /* namespace okvis */

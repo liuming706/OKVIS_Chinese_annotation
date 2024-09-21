@@ -4,7 +4,7 @@
  *
  *  Redistribution and use in source and binary forms, with or without
  *  modification, are permitted provided that the following conditions are met:
- * 
+ *
  *   * Redistributions of source code must retain the above copyright notice,
  *     this list of conditions and the following disclaimer.
  *   * Redistributions in binary form must reproduce the above copyright notice,
@@ -45,60 +45,61 @@
 #include <okvis/FrameTypedefs.hpp>
 #include <okvis/assert_macros.hpp>
 
-TEST(okvisTestSuite, HomogeneousPointError) {
-  // initialize random number generator
-  //srand((unsigned int) time(0)); // disabled: make unit tests deterministic...
+TEST(okvisTestSuite, HomogeneousPointError)
+{
+    // initialize random number generator
+    // srand((unsigned int) time(0)); // disabled: make unit tests deterministic...
 
-  // Build the problem.
-  okvis::ceres::Map map;
+    // Build the problem.
+    okvis::ceres::Map map;
 
-  OKVIS_DEFINE_EXCEPTION(Exception, std::runtime_error);
+    OKVIS_DEFINE_EXCEPTION(Exception, std::runtime_error);
 
-  for (size_t i = 0; i < 100; ++i) {
-    // create point
-    Eigen::Vector4d point;
-    point.head<3>().setRandom();
-    point *= 100;
-    point[3] = 1.0;
+    for (size_t i = 0; i < 100; ++i) {
+        // create point
+        Eigen::Vector4d point;
+        point.head<3>().setRandom();
+        point *= 100;
+        point[3] = 1.0;
 
-    // create parameter block
-    std::shared_ptr<okvis::ceres::HomogeneousPointParameterBlock> homogeneousPointParameterBlock(
-        new okvis::ceres::HomogeneousPointParameterBlock(point, i));
-    // add it as optimizable thing.
-    map.addParameterBlock(homogeneousPointParameterBlock,
-                          okvis::ceres::Map::HomogeneousPoint);
-    map.setParameterBlockVariable(i);
+        // create parameter block
+        std::shared_ptr<okvis::ceres::HomogeneousPointParameterBlock> homogeneousPointParameterBlock(
+            new okvis::ceres::HomogeneousPointParameterBlock(point, i));
+        // add it as optimizable thing.
+        map.addParameterBlock(homogeneousPointParameterBlock,
+                              okvis::ceres::Map::HomogeneousPoint);
+        map.setParameterBlockVariable(i);
 
-    // invent a point error
-    std::shared_ptr<okvis::ceres::HomogeneousPointError> homogeneousPointError(
-        new okvis::ceres::HomogeneousPointError(
-            homogeneousPointParameterBlock->estimate(), 0.1));
+        // invent a point error
+        std::shared_ptr<okvis::ceres::HomogeneousPointError> homogeneousPointError(
+            new okvis::ceres::HomogeneousPointError(
+                homogeneousPointParameterBlock->estimate(), 0.1));
 
-    // add it
-    ::ceres::ResidualBlockId id = map.addResidualBlock(
-        homogeneousPointError, NULL, homogeneousPointParameterBlock);
+        // add it
+        ::ceres::ResidualBlockId id = map.addResidualBlock(
+            homogeneousPointError, NULL, homogeneousPointParameterBlock);
 
-    // disturb
-    Eigen::Vector4d point_disturbed = point;
-    point_disturbed.head<3>() += 0.2 * Eigen::Vector3d::Random();
-    homogeneousPointParameterBlock->setEstimate(point_disturbed);
+        // disturb
+        Eigen::Vector4d point_disturbed = point;
+        point_disturbed.head<3>() += 0.2 * Eigen::Vector3d::Random();
+        homogeneousPointParameterBlock->setEstimate(point_disturbed);
 
-    // check Jacobian
-    OKVIS_ASSERT_TRUE(Exception, map.isJacobianCorrect(id),
-                   "Jacobian verification on homogeneous point error failed.");
-  }
+        // check Jacobian
+        OKVIS_ASSERT_TRUE(
+            Exception, map.isJacobianCorrect(id),
+            "Jacobian verification on homogeneous point error failed.");
+    }
 
-  // Run the solver!
-  map.options.minimizer_progress_to_stdout = false;
-  std::cout << "run the solver... " << std::endl;
-  map.solve();
+    // Run the solver!
+    map.options.minimizer_progress_to_stdout = false;
+    std::cout << "run the solver... " << std::endl;
+    map.solve();
 
-  // print some infos about the optimization
-  //std::cout << map.summary.BriefReport() << "\n";
+    // print some infos about the optimization
+    // std::cout << map.summary.BriefReport() << "\n";
 
-  // check convergence. this must converge to zero, since it is not an overdetermined system.
-  OKVIS_ASSERT_TRUE(
-      Exception,
-      map.summary.final_cost < 1.0e-10,
-      "No convergence. this must converge to zero, since it is not an overdetermined system.");
+    // check convergence. this must converge to zero, since it is not an overdetermined system.
+    OKVIS_ASSERT_TRUE(Exception, map.summary.final_cost < 1.0e-10,
+                      "No convergence. this must converge to zero, since it is "
+                      "not an overdetermined system.");
 }
