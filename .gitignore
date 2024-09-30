@@ -27,6 +27,6 @@ CMakeLists.txt.user
 *.out
 *.app
 build/**
-datasets/**
+datasets/*
 # Docu
 documentation/html/

@@ -88,7 +88,11 @@ or
     git clone https://github.com/ethz-asl/okvis.git
 
 ### Building the project ###
-
+### PRE_BUILD
+```bash
+vim  ~/home/ubt~/workspace/noetic_ws/OKVIS_Chinese_annotation/build/brisk/src/brisk_external/src/demo-free.cc
+# 添加头文件 #include <opencv4/opencv2/imgproc/types_c.h>
+```
 To change the cmake build type for the whole project use:
 
     mkdir build && cd build
@@ -115,7 +119,7 @@ In order to run a minimal working example, follow the steps below:
 
 2. Run the app as
 
-        build/okvis_app_synchronous config/config_fpga_p2_euroc.yaml datasets/MH_01_easy/mav0/
+        build/okvis_app_synchronous config/config_fpga_p2_euroc.yaml ~/workspace/datasets/MH_01_easy/mav0/
 
 ### Outputs and frames
 
